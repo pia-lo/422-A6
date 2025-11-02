@@ -1,4 +1,6 @@
 import random
+import copy
+import time
 
 # create a 3SAT problem with c clauses of 3 prepositions out of n possible variables
 def createSat(c, n):
@@ -55,8 +57,72 @@ def numUnsatisfied(problem, interp):
 
     return clausesUnsatisfied
 
-# testp = [((1, 0), (2, 0), (3, 0)), ((1, 1), (2, 0), (3, 0))]
-# testintep = [1, 0, 0]
-#
-# result = numUnsatisfied(testp, testintep)
-# print(result)
+# finds a clause that is unsatisfied
+def findUnsatisfied(problem, interp):
+    for i in problem:
+        disjunc = False
+        for j in i:
+            val = j[0] - 1
+            if j[1] == 1:  # if prep is negated
+                disjunc = disjunc or not interp[val]
+            else:
+                disjunc = disjunc or interp[val]
+        if disjunc == False:
+            return i
+    return None
+
+
+# given a problem and a random interp, flips a var in an unsatisfied clause until it either finds a model or times out after 10 sec
+def walkSAT(problem, n):
+    model = [random.getrandbits(1)]*n # create a random assignment of T/F to vars
+
+    unsatisfied = numUnsatisfied(problem,model)
+    #print("init vals ", model, unsatisfied)
+
+    timeout_start = time.time()
+
+    while time.time() < timeout_start + 10: # if model is not found in <10 sec, return none
+        if unsatisfied == 0: # if model is found (no clause unsatisfied), return model
+            break
+
+        clause = findUnsatisfied(problem,model) # find an unsatisfied clause
+
+        var1 = copy.deepcopy(model)
+        var1[clause[0][0]-1] = not model[clause[0][0]-1] # copy the model and flip the value of a var
+        var2 = copy.deepcopy(model)
+        var2[clause[1][0] - 1] = not model[clause[1][0] - 1]
+        var3 = copy.deepcopy(model)
+        var3[clause[2][0] - 1] = not model[clause[2][0] - 1]
+
+        unsatisfiedVars = [(var1, numUnsatisfied(problem,var1)), (var2, numUnsatisfied(problem,var2)), (var3, numUnsatisfied(problem,var3))]
+        #print("here are options ", unsatisfiedVars)
+
+        if random.getrandbits(1) == 1: # 0.5 prob to choose greedily (flip var that minimizes unsatisfied)
+            greedyChoice = min(unsatisfiedVars, key=lambda x: x[1])
+            #print("we are greedy ", greedyChoice)
+            model = greedyChoice[0]
+            unsatisfied = greedyChoice[1]
+        else: # 0.5 prob to choose randomly (flip random var)
+            match random.randint(1,3):
+                case 1:
+                    model = var1
+                    unsatisfied = unsatisfiedVars[0][1]
+                    #print("we are random 1 ", model, unsatisfied)
+                case 2:
+                    model = var2
+                    unsatisfied = unsatisfiedVars[1][1]
+                    #print("we are random 2 ", model, unsatisfied)
+                case 3:
+                    model = var3
+                    unsatisfied = unsatisfiedVars[2][1]
+                    #print("we are random 3 ", model, unsatisfied)
+
+    if unsatisfied == 0:
+        return model
+    else:
+        return None
+
+testp = [((2, 1), (2, 1), (2, 1)), ((2, 0), (2, 0), (2, 0))]
+
+result = walkSAT(testp, 3)
+print(result)
