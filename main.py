@@ -27,6 +27,7 @@ def generateProblems(m,c,n):
     return problems
 
 
+# given a problem and interpretation, find all unsatisfied clauses
 def clausesUnsatisfied(problem, interp):
     clauses = []
     for i in problem: # for each clause
@@ -49,7 +50,6 @@ def walkSAT(problem, n):
 
     unsatisfied = clausesUnsatisfied(problem,model)
     flipCounter = 0
-    #print("init vals ", model, unsatisfied)
 
     timeout_start = time.time()
 
@@ -60,8 +60,6 @@ def walkSAT(problem, n):
         # choose a random unsatisfied clause
         randIdx = random.randint(0,len(unsatisfied)-1)
         clause = unsatisfied[randIdx]
-        #print("here is cur interp ", model)
-        #print("here are unsatisfied ", unsatisfied)
 
         # makes copies of the current interp with a flipped var from the unsatisfied clause
         var1 = copy.deepcopy(model)
@@ -72,11 +70,9 @@ def walkSAT(problem, n):
         var3[clause[2][0] - 1] = not model[clause[2][0] - 1]
 
         unsatisfiedVars = [(var1, clausesUnsatisfied(problem,var1)), (var2, clausesUnsatisfied(problem,var2)), (var3, clausesUnsatisfied(problem,var3))]
-        #print("here are options ", unsatisfiedVars)
 
         if random.getrandbits(1) == 1: # 0.5 prob to choose greedily (flip var that minimizes unsatisfied)
             greedyChoice = min(unsatisfiedVars, key=lambda x: len(x[1]))
-            #print("we are greedy ", greedyChoice)
             model = greedyChoice[0]
             unsatisfied = greedyChoice[1]
         else: # 0.5 prob to choose randomly (flip random var)
@@ -84,15 +80,12 @@ def walkSAT(problem, n):
                 case 1:
                     model = var1
                     unsatisfied = unsatisfiedVars[0][1]
-                    #print("we are random 1 ", model, unsatisfied)
                 case 2:
                     model = var2
                     unsatisfied = unsatisfiedVars[1][1]
-                    #print("we are random 2 ", model, unsatisfied)
                 case 3:
                     model = var3
                     unsatisfied = unsatisfiedVars[2][1]
-                    #print("we are random 3 ", model, unsatisfied)
         flipCounter += 1
 
     if len(unsatisfied) == 0:
@@ -100,7 +93,7 @@ def walkSAT(problem, n):
     else:
         return -1
 
-
+# for a list of problems, return number of flips to solve each problem or -1 if timeout
 def walkProblems(problems, n):
     numFlipsToSolve = []
 
@@ -112,8 +105,11 @@ def walkProblems(problems, n):
 # from list of flips, remove any timeout terminations (-1), find median and number of success
 def lenAndMedian(flipSolution):
     successful = list(filter(lambda x: x != -1, flipSolution))
-    median = statistics.median(successful)
-    return median, len(successful)
+    if len(successful) == 0:
+        return 0, 0
+    else:
+        median = statistics.median(successful)
+        return median, len(successful)
 
 
 # 50 3SAT problems for each integer value of c/n from 1 to 10
@@ -128,8 +124,52 @@ cn8 = generateProblems(50,160,20)
 cn9 = generateProblems(50,180,20)
 cn10 = generateProblems(50,200,20)
 
-# cn1result = walkProblems(cn4, 20)
-# cn1med = lenAndMedian(cn1result)
-# cn10result = walkProblems(cn10, 20)
-# print(cn1result)
-# print(cn1med)
+cn1result = walkProblems(cn1, 20)
+cn1med = lenAndMedian(cn1result)
+print("cn1 ", cn1result)
+print(cn1med)
+
+cn2result = walkProblems(cn2, 20)
+cn2med = lenAndMedian(cn2result)
+print("cn2 ", cn2result)
+print(cn2med)
+
+cn3result = walkProblems(cn3, 20)
+cn3med = lenAndMedian(cn3result)
+print("cn3 ", cn3result)
+print(cn3med)
+
+cn4result = walkProblems(cn4, 20)
+cn4med = lenAndMedian(cn4result)
+print("cn4 ", cn4result)
+print(cn4med)
+
+cn5result = walkProblems(cn5, 20)
+cn5med = lenAndMedian(cn5result)
+print("cn5 ", cn5result)
+print(cn5med)
+
+cn6result = walkProblems(cn6, 20)
+cn6med = lenAndMedian(cn6result)
+print("cn6 ", cn6result)
+print(cn6med)
+
+cn7result = walkProblems(cn7, 20)
+cn7med = lenAndMedian(cn7result)
+print("cn7 ", cn7result)
+print(cn7med)
+
+cn8result = walkProblems(cn8, 20)
+cn8med = lenAndMedian(cn8result)
+print("cn8 ", cn8result)
+print(cn8med)
+
+cn9result = walkProblems(cn9, 20)
+cn9med = lenAndMedian(cn9result)
+print("cn9 ", cn9result)
+print(cn9med)
+
+cn10result = walkProblems(cn10, 20)
+cn10med = lenAndMedian(cn10result)
+print("cn10 ", cn10result)
+print(cn10med)
